@@ -21,12 +21,11 @@ NSMutableArray* buttons;
 NSMutableArray* trackRandoms;
 NSTimer* timer;
 NSArray* indexArray;
-
 //tracks user selection in one dimensional array
 NSMutableArray* oneDimArray;
 NSMutableArray* defaultDimArray;
 
-int numStartPressed, numMoves, count;
+int numStartPressed, numMoves, count, firstButtonIndex;
 int buttonRow, buttonCol, zeroRow, zeroCol;
 BOOL pauseButtonIsPressed = true;
 BOOL firstButtonPressed = true;
@@ -123,8 +122,6 @@ int matrix [4][4] = {
     for (UIButton *btn in buttons){
         [btn setEnabled: true];
     }
-    [pauseButton setEnabled: YES];
-    
 
     //disables and hides startButton
     [startButton setHidden: YES];
@@ -157,7 +154,7 @@ int matrix [4][4] = {
     
     //resets tiles
     [self resetTiles];
-
+    
     //disables buttons
     for (UIButton *btn in buttons){
         [btn setEnabled: false];
@@ -166,24 +163,15 @@ int matrix [4][4] = {
 
     firstButtonPressed = true; //starts timer when firstButton pressed
     [winLabel setHidden:YES]; //winLabel hidden
+    firstButtonIndex = 0;
     
     
 }
 
 
 - (IBAction)buttonPressed:(id)sender {
-    numMoves++;
     UIButton* btn = (UIButton*)(id)sender;
     int btnTag = (int)[btn tag];
-    
-    //starts timer when firstButtonPressed
-    if (firstButtonPressed){
-        [self countdown];
-        firstButtonPressed = false;
-    }
-    
-    //update move label
-    [moveLabel setText:[@"Moves \n" stringByAppendingString:[NSString stringWithFormat:@"%d", numMoves]]];
     
     //parses matrix to look for location of buttonPressed
     for (int row = 0; row < 4; row++){
@@ -208,6 +196,9 @@ int matrix [4][4] = {
     //conditions
     if (buttonRow == zeroRow){
         if(zeroCol - buttonCol == 1){
+            [self startTimer];
+            numMoves++;
+            
             [UIView animateWithDuration: 0.5 animations: ^{
                 btn.frame = CGRectOffset(btn.frame, 85, 0);
             }];
@@ -215,6 +206,9 @@ int matrix [4][4] = {
             userMatrix[zeroRow][zeroCol] = btnTag;
             
         } else if (buttonCol - zeroCol == 1) {
+            [self startTimer];
+            numMoves++;
+            
             [UIView animateWithDuration: 0.5 animations: ^{
                 btn.frame = CGRectOffset(btn.frame, -85, 0);
             }];
@@ -225,6 +219,9 @@ int matrix [4][4] = {
         }
     } else if (buttonCol == zeroCol){
         if (buttonRow - zeroRow == 1){
+            [self startTimer];
+            numMoves++;
+            
             //moves button to the top
             [UIView animateWithDuration: 0.5 animations: ^{
                 btn.frame = CGRectOffset(btn.frame, 0, -85);
@@ -233,6 +230,9 @@ int matrix [4][4] = {
             userMatrix[zeroRow][zeroCol] = btnTag;
             
         } else if (zeroRow - buttonRow == 1){
+            [self startTimer];
+            numMoves++;
+            
             //moves button to the bottom
             [UIView animateWithDuration:0.5 animations:^{
                 btn.frame = CGRectOffset(btn.frame, 0, 85);
@@ -245,6 +245,10 @@ int matrix [4][4] = {
     } else {
         AudioServicesPlaySystemSound(kSystemSoundID_Vibrate);
     }
+    
+    //update move label
+    [moveLabel setText:[@"Moves \n" stringByAppendingString:[NSString stringWithFormat:@"%d", numMoves]]];
+    
     
     /* FOR DEBUGGING
      * prints real-time elements in matrix
@@ -265,7 +269,6 @@ int matrix [4][4] = {
             i++;
         }
     }
-
     [self compareMatrix]; //compares matrix between userMatrix and default matrix
 }
 
@@ -275,7 +278,7 @@ int matrix [4][4] = {
             btn.alpha = 0.6;
             [btn setEnabled: NO];
         }
-        [winLabel setText:@"Paused."];
+        [winLabel setText:@"Paused"];
         [winLabel setHidden: NO];
         [pauseButton setTitle:@"Resume" forState:UIControlStateNormal];
         pauseButtonIsPressed = false;
@@ -401,12 +404,24 @@ int matrix [4][4] = {
     }
     
     timeLabel.text = [@"Time \n" stringByAppendingString: [NSString stringWithFormat:@"%02d:%02d", min, sec]];
+    
 }
 
 - (void) resetTiles {
     for (int i = 0; i < [buttons count]; i++){
         UIButton* btn = buttons[i];
         btn.frame = [indexArray[i] CGRectValue];
+    }
+}
+- (void) startTimer {
+    //starts timer when firstButtonPressed
+    if (firstButtonPressed){
+        if (firstButtonIndex == 0){
+            [self countdown];
+            firstButtonIndex++;
+            [pauseButton setEnabled: YES];
+            firstButtonPressed = false;
+        }
     }
 }
 @end
